@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt" xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+            crossorigin="anonymous"></script>
+    <title>Gestão Administrativa</title>
+</head>
+<body>
+    
+    <header>
+        <div class="info-header">  
+        	<div class="icons-header">
+                <img src="img/cns.png" class="log">
+            </div>       
+            <div class="logo">           
+                <h3>Cartão Nacional de Saúde</h3>
+            </div>
+        </div>
+    </header>
+<!--Fim Header-->
+
+<section class="main">
+<div class="alert"><i class="fa-solid fa-circle-exclamation"></i></div>
+	<div class="content">
+	    <div class="titulo-secao">
+	        <h2>Painel de Consultas</h2>
+	        <div class="separator"></div>
+	        <p>Dados da Consulta</p>
+	    </div>
+	    <div class="tables" >
+			<div class="table_header" >
+				<p></p>
+				<label for="html">Selecionar tipo da Pesquisa:</label><br>
+				<div id="div_header">
+					<div class="radio"> 
+						<input type="radio" id="cns" name="fav_language" value="CNS" checked >
+						<label for="cns">CNS</label><br>
+					</div>
+					<div class="radio">
+						<input type="radio" id="cpf" name="fav_language" value="CPF">
+						<label for="cpf">CPF</label><br>
+					</div>
+					<div class="radio">
+						<input type="radio" id="nome" name="fav_language" value="NOME">
+						<label for="nome">NOME</label><br>
+					</div>
+				</div>
+				<div class="label-float">
+					<input type="text" id="nomepesquisa" name="nomepesquisa">
+					<button class="localiza" id="localiza"><i class="fa-solid fa-magnifying-glass"></i>  Localizar</button>
+				</div>
+				
+			</div>
+		</div>
+
+	    <div class="card" id="conteudo">
+	    	<br>
+	    	<div>
+				<label id="labelTitulo" ><strong>Nº Cartão SUS:</strong> </label>
+				<label id="labelTitulo" class="cns"></label>
+			</div>
+			<br>
+			<div>
+				<label id="labelTitulo" ><strong>Nome:</strong> </label>
+				<label id="labelTitulo" class="nome"></label>
+				<label id="labelTitulo" ><strong>CPF:</strong> </label>
+				<label id="labelTitulo" class="cpf"></label>
+			</div>
+			<br>
+			<div>
+				<label id="labelTitulo" ><strong>Nome da Mãe:</strong> </label>
+				<label id="labelTitulo" class="mae"></label>
+				<label id="labelTitulo" ><strong>Nome do Pai:</strong> </label>
+				<label id="labelTitulo" class="pai"></label>
+			</div>
+			<br>
+			<div>
+				<label id="labelTitulo" ><strong>Endereço:</strong> </label>
+				<label id="labelTitulo" class="end"></label>
+				<label id="labelTitulo" ><strong>Número:</strong> </label>
+				<label id="labelTitulo" class="numero"></label>
+				<label id="labelTitulo" ><strong>Bairro:</strong> </label>
+				<label id="labelTitulo" class="bairro"></label>
+			</div>
+			<br>
+			<div>
+				<label id="labelTitulo" ><strong>Complemento:</strong> </label>
+				<label id="labelTitulo" class="comp"></label>
+				<label id="labelTitulo" ><strong>Cidade:</strong> </label>
+				<label id="labelTitulo" class="cidade"></label>
+				<label id="labelTitulo" ><strong>Estado:</strong> </label>
+				<label id="labelTitulo" class="estado"></label>
+			</div>
+			<br>
+			<div>
+				<label id="labelTitulo" ><strong>Sexo:</strong> </label>
+				<label id="labelTitulo" class="sexo"></label>
+				<label id="labelTitulo" ><strong>Raça:</strong> </label>
+				<label id="labelTitulo" class="raca"></label>
+			</div>
+			<br>
+			<div>
+				<label id="labelTitulo" ><strong>Data de Nascimento:</strong> </label>
+				<label id="labelTitulo" class="nasc"></label>
+			</div>
+			<br>
+	    </div>
+	
+	</div><!--content-->
+</section><!--main-->
+
+<!-- Modal Matricula -->
+<div id="fade" class="hide"></div>
+   <div id="modal" class="hide">
+     <div class="modal-header">
+       <h2>Cartões </h2>
+       <button id="close-modal">Fecha</button>
+     </div>
+     
+     <div class="modal-body">
+     <div style="height: 230px; overflow: auto;">
+		<table class="table" id="tableCns" style=" width: 100%; font-size: 13px;">
+			<thead>
+				<tr>
+					<th scope="col">Nº Cartão</th>
+					<th scope="col">Nome
+						<p>Nome da Mãe</p>
+					</th>
+					<th scope="col">Seleção</th>
+				</tr>
+			</thead>
+			<tbody>
+
+			</tbody>
+		</table>
+	</div>
+   </div>
+</div>
+	<script src="js/script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/js/all.min.js" integrity="sha512-naukR7I+Nk6gp7p5TMA4ycgfxaZBJ7MO5iC3Fp6ySQyKFHOGfpkSZkYVWV5R7u7cfAicxanwYQ5D1e17EfJcMA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  	<!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>-->
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js" crossorigin="anonymous"></script>
+</body>
+</html>
