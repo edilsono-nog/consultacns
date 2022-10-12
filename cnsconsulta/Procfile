@@ -1,0 +1,1 @@
+web: java -jar $JAVA_OPTS -Dserver.port=$PORT target/cnsconsulta-1.0.jar
