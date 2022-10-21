@@ -89,11 +89,11 @@ public class PDQClientController {
 	
 	private static final PDQSupplierService SERVICE;
 	
-	@SuppressWarnings({ "restriction", "unchecked" })
+	@SuppressWarnings({ "unchecked" })
 	@GetMapping(value = "listacns")
     @ResponseBody
     public ResponseEntity<?> listacns(@RequestParam(name = "filtro") String filtro,
-    													@RequestParam(name = "tipo") String tipo) throws UnsupportedEncodingException{
+    													@RequestParam(name = "tipo") String tipo){
 		
 		List<ConsultaCNS> consultas = cnsRepository.findAll();
 		
