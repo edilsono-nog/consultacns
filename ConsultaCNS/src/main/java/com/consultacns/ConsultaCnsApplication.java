@@ -23,5 +23,8 @@ public class ConsultaCnsApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(ConsultaCnsApplication.class, args);
 	}
+	
+	public static String PORT = System.getenv("PORT");
+	
 
 }
