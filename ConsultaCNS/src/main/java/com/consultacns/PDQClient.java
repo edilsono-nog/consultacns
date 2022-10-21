@@ -333,7 +333,7 @@ public class PDQClient {
 		controlAct.setQueryByParameter(jaxbQuery);
 		// </controlActProcess>
 
-		try {
+	//	try {
 			PRPAIN201306UV02 retorno = pdq.pdqSupplierPRPAIN201305UV02(body);	
 			
 			System.out.println(retorno.getControlActProcess().getSubject().size());
@@ -388,9 +388,9 @@ public class PDQClient {
 				}
 			}
 			
-		} catch (com.sun.xml.internal.ws.fault.ServerSOAPFaultException e) {
+		/*} catch (com.sun.xml.internal.ws.fault.ServerSOAPFaultException e) {
 			System.out.println("Falha ao Acessar o Servidor");
-		}
+		}*/
 		
 
 		
