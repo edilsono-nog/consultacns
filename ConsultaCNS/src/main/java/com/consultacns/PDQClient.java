@@ -1,9 +1,8 @@
-package com.consultacns.controller;
+package com.consultacns;
 
 import ihe.iti.pdqv3._2007.PDQSupplierPortType;
 import ihe.iti.pdqv3._2007.PDQSupplierService;
 
-import java.io.UnsupportedEncodingException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
@@ -23,31 +22,30 @@ import javax.xml.ws.handler.Handler;
 import javax.xml.ws.handler.HandlerResolver;
 import javax.xml.ws.handler.PortInfo;
 
-import org.hl7.v3.AD;
 import org.hl7.v3.ActClassControlAct;
-import org.hl7.v3.AdxpAdditionalLocator;
-import org.hl7.v3.AdxpCity;
-import org.hl7.v3.AdxpHouseNumber;
-import org.hl7.v3.AdxpPostalCode;
-import org.hl7.v3.AdxpState;
-import org.hl7.v3.AdxpStreetName;
-import org.hl7.v3.AdxpUnitID;
 import org.hl7.v3.CD;
+import org.hl7.v3.CE;
+import org.hl7.v3.COCTMT030007UVPerson;
 import org.hl7.v3.CS;
 import org.hl7.v3.CommunicationFunctionType;
 import org.hl7.v3.EN;
 import org.hl7.v3.EnGiven;
 import org.hl7.v3.EntityClassDevice;
 import org.hl7.v3.II;
+import org.hl7.v3.IVLTS;
 import org.hl7.v3.MCCIMT000100UV01Device;
 import org.hl7.v3.MCCIMT000100UV01Receiver;
 import org.hl7.v3.MCCIMT000100UV01Sender;
 import org.hl7.v3.PDQObjectFactory;
+import org.hl7.v3.PN;
 import org.hl7.v3.PRPAIN201305UV02;
 import org.hl7.v3.PRPAIN201305UV02QUQIMT021001UV01ControlActProcess;
 import org.hl7.v3.PRPAIN201306UV02;
+import org.hl7.v3.PRPAMT201306UV02LivingSubjectAdministrativeGender;
+import org.hl7.v3.PRPAMT201306UV02LivingSubjectBirthTime;
 import org.hl7.v3.PRPAMT201306UV02LivingSubjectId;
 import org.hl7.v3.PRPAMT201306UV02LivingSubjectName;
+import org.hl7.v3.PRPAMT201306UV02MothersMaidenName;
 import org.hl7.v3.PRPAMT201306UV02ParameterList;
 import org.hl7.v3.PRPAMT201306UV02QueryByParameter;
 import org.hl7.v3.PRPAMT201310UV02OtherIDs;
@@ -56,51 +54,84 @@ import org.hl7.v3.ST;
 import org.hl7.v3.TS;
 import org.hl7.v3.XActMoodIntentEvent;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Controller;
 
-import com.consultacns.WSSUsernameTokenSecurityHandler;
 import com.consultacns.model.ConsultaCNS;
-import com.consultacns.model.Municipios;
-import com.consultacns.model.Raca;
-import com.consultacns.repository.ConsultaCNSRepository;
-import com.consultacns.repository.MunicipiosRepository;
-import com.consultacns.repository.RacaRepository;
 
-@RestController
-@RequestMapping(value = "/cnsconsulta")
-public class PDQClientController {
-	
-	@Autowired
-	private ConsultaCNSRepository cnsRepository;
-	
-	@Autowired
-	private RacaRepository racaRepository;
-	
-	@Autowired
-	private MunicipiosRepository municipiosRepository;
-	
-	ConsultaCNS consulta = new ConsultaCNS();
+@Controller
+public class PDQClient {
 	
 	private static final PDQSupplierService SERVICE;
-	
-	@SuppressWarnings({  "unchecked" })
-	@GetMapping(value = "listacns")
-    @ResponseBody
-    public ResponseEntity<?> listacns(@RequestParam(name = "filtro") String filtro,
-    													@RequestParam(name = "tipo") String tipo) throws UnsupportedEncodingException{
-		
-		List<ConsultaCNS> consultas = cnsRepository.findAll();
-		
-		if(consultas.size() > 0) {
-			cnsRepository.deleteAll();
+
+	static {
+
+		// CONFIGURA A JVM PARA IGNORAR O CERTIFICADOS INVALIDOS
+		// Create a trust manager that does not validate certificate chains
+		TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
+			public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+				return null;
+			}
+
+			public void checkClientTrusted(X509Certificate[] certs, String authType) {
+			}
+
+			public void checkServerTrusted(X509Certificate[] certs, String authType) {
+			}
+		} };
+
+		// Install the all-trusting trust manager
+		SSLContext sc = null;
+		try {
+			sc = SSLContext.getInstance("SSL");
+			sc.init(null, trustAllCerts, new java.security.SecureRandom());
+		} catch (NoSuchAlgorithmException e1) {
+			throw new RuntimeException(e1);
+		} catch (KeyManagementException e) {
+			throw new RuntimeException(e);
 		}
-		
+
+		HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+
+		// Create all-trusting host name verifier
+		HostnameVerifier allHostsValid = new HostnameVerifier() {
+			public boolean verify(String hostname, SSLSession session) {
+				return true;
+			}
+		};
+
+		// Install the all-trusting host verifier
+		HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
+
+		SERVICE = new PDQSupplierService();
+
+		// Handlers para acionar os parametros de autenticacao no cabecalho da
+		// mensagem
+		final WSSUsernameTokenSecurityHandler handler = new WSSUsernameTokenSecurityHandler("02432879414", "i1o05sHopx91*");
+		SERVICE.setHandlerResolver(new HandlerResolver() {
+
+			@Override
+			@SuppressWarnings("rawtypes")
+			public List<Handler> getHandlerChain(PortInfo arg0) {
+				List<Handler> handlerList = new ArrayList<Handler>();
+				handlerList.add(handler);
+				return handlerList;
+			}
+		});
+	}
+
+	//private String filtros;
+	//private String tipos;
+	
+	public PDQClient() {
+		//this.filtros = filtro;
+		//this.tipos = tipo;
+	}
+
+	//public static void main(String args[]) {
+	//	new PDQClientExample("EDILSON DE OLIVEIRA NOGUEIRA", "Nome").callService();
+	//}
+
+	public void callService( String filtro, String tipo ) {
 		PDQSupplierPortType pdq = SERVICE.getPDQSupplierPortSoap12();
 
 		PRPAIN201305UV02 body = new PRPAIN201305UV02();
@@ -208,7 +239,7 @@ public class PDQClientController {
 			// - PESQUISA POR CNS
 			II cnsParameter = new II();
 			cnsParameter.setRoot("2.16.840.1.113883.13.236");
-			cnsParameter.setExtension(filtro);
+			cnsParameter.setExtension(filtro.toString());
 			livingSubjectId.getValue().add(cnsParameter);
 			// <semanticsText>LivingSubject.id</semanticsText>
 			ST cnsSemanticsText = new ST();
@@ -233,7 +264,7 @@ public class PDQClientController {
 			livingSubjectIdCPF.setSemanticsText(cpfSemanticsText);
 		}
 		
-		if ("NOME".equals(tipo)) {
+		if ("Nome".equals(tipo)) {
 			//Nome
 			PDQObjectFactory factory = new PDQObjectFactory();
 			PRPAMT201306UV02LivingSubjectName livingSubjectNome = new PRPAMT201306UV02LivingSubjectName();
@@ -241,13 +272,59 @@ public class PDQClientController {
 			EN nomeParametro = new EN();
 			nomeParametro.getUse().add("L");
 			EnGiven given = new EnGiven();
-			given.getContent().add(filtro);
+			given.getContent().add(filtro.toString());
 			nomeParametro.getContent().add(factory.createENGiven(given));
 			livingSubjectNome.getValue().add(nomeParametro);
 			ST nomeSemanticsText = new ST();
 			nomeSemanticsText.getContent().add("LivingSubject.Given");
 			livingSubjectNome.setSemanticsText(nomeSemanticsText);
 		}
+		
+		
+		//Sexo
+//		PRPAMT201306UV02LivingSubjectAdministrativeGender livingSubjectGender = new PRPAMT201306UV02LivingSubjectAdministrativeGender();
+//		parameterList.getLivingSubjectAdministrativeGender().add(livingSubjectGender);
+//		CE sexoParametro = new CE();
+//		sexoParametro.setCodeSystem("2.16.840.1.113883.5.1");
+//		sexoParametro.setCode("[SEXO]");
+//		livingSubjectGender.getValue().add(sexoParametro);
+//		ST sexoSemanticsText = new ST();
+//		sexoSemanticsText.getContent().add("LivingSubject.administrativeGender");
+//		livingSubjectGender.setSemanticsText(sexoSemanticsText);
+		
+		
+		//LocalID
+//		PRPAMT201306UV02LivingSubjectId livingSubjectLocalID = new PRPAMT201306UV02LivingSubjectId();
+//		parameterList.getLivingSubjectId().add(livingSubjectLocalID);
+//		II localIDParametro = new II();
+//		localIDParametro.setRoot("2.16.840.1.113883.3.4594.100.3");
+//		localIDParametro.setExtension("[Local ID]");
+//		livingSubjectLocalID.getValue().add(localIDParametro);
+//		ST localIDSemanticsText = new ST();
+//		localIDSemanticsText.getContent().add("LivingSubject.id");
+//		livingSubjectLocalID.setSemanticsText(localIDSemanticsText);
+		
+		//Nome da mae
+//		PRPAMT201306UV02MothersMaidenName mothersMaidenName = new PRPAMT201306UV02MothersMaidenName();
+//		parameterList.getMothersMaidenName().add(mothersMaidenName);
+//		PN nomeMaeParametro = new PN();
+//		nomeMaeParametro.getUse().add("L");
+//		nomeMaeParametro.getContent().add("MARLENE DE OLIVEIRA");
+//		mothersMaidenName.getValue().add(nomeMaeParametro);
+//		ST nomeMaeSemanticsText = new ST();
+//		nomeMaeSemanticsText.getContent().add("mothersMaidenName");
+//		mothersMaidenName.setSemanticsText(nomeMaeSemanticsText);
+		
+		//Data de Nascimento
+//		PRPAMT201306UV02LivingSubjectBirthTime livingSubjectBirhtTime = new PRPAMT201306UV02LivingSubjectBirthTime();
+//		parameterList.getLivingSubjectBirthTime().add(livingSubjectBirhtTime);
+//		IVLTS birthTime = new IVLTS();
+//		birthTime.setValue("19720918000000");
+//		livingSubjectBirhtTime.getValue().add(birthTime);
+//		ST dataNascimentoST = new ST();
+//		dataNascimentoST.getContent().add("LivingSubject.birthTime");
+//		livingSubjectBirhtTime.setSemanticsText(dataNascimentoST);
+		
 		
 		// </parameterList>
 		// </queryByParameter>
@@ -259,198 +336,63 @@ public class PDQClientController {
 	//	try {
 			PRPAIN201306UV02 retorno = pdq.pdqSupplierPRPAIN201305UV02(body);	
 			
-			//System.out.println(retorno.getControlActProcess().getSubject().size());
+			System.out.println(retorno.getControlActProcess().getSubject().size());
 			
 			for (int i = 0; i < retorno.getControlActProcess().getSubject().size(); i++) {
 				PRPAMT201310UV02Person patientPerson = retorno.getControlActProcess().getSubject().get(i).getRegistrationEvent().getSubject1().getPatient()
 						.getPatientPerson().getValue();
-				//System.out.println(patientPerson);
+				System.out.println(patientPerson);
+				
+				ConsultaCNS consulta = new ConsultaCNS();
+				
+				/*@SuppressWarnings("unchecked")
+				JAXBElement<EnGiven> objNome = (JAXBElement<EnGiven>) patientPerson.getName().get(0).getContent().get(0);
+
+				System.out.println("NOME: " + objNome.getValue().getContent().get(0));
+				consulta.setNome(objNome.getValue().getContent().get(0).toString());*/
 				
 				//IDs
 				for (PRPAMT201310UV02OtherIDs otherId : patientPerson.getAsOtherIDs()) {
-					
-					for(PRPAMT201310UV02OtherIDs cpfId : patientPerson.getAsOtherIDs()) {
-					//	System.out.println(cpfId.getId().get(0).getRoot().toString());
-						if("2.16.840.1.113883.13.237".equals(cpfId.getId().get(0).getRoot().toString())) {
-					//		System.out.println(cpfId.getId().get(0).getExtension().toString());
-							consulta.setCpf(cpfId.getId().get(0).getExtension().toString());
-						}
-					}
-					
 					for (II id : otherId.getId()) {
 						//CNS
 						if ("2.16.840.1.113883.13.236".equals(id.getRoot())) {
-						//	System.out.print("CNS: " + id.getExtension() + " ");
+							System.out.print("CNS: " + id.getExtension() + " ");
 							consulta.setCns(id.getExtension());
 						}
 						if ("2.16.840.1.113883.13.236.1".equals(id.getRoot())) {
-						//	System.out.println("Tipo: " + id.getExtension());
+							System.out.println("Tipo: " + id.getExtension());
 							consulta.setTipo(id.getExtension());
-						}	
+						}				
 					}
-					
+					@SuppressWarnings("unchecked")
 					JAXBElement<EnGiven> objNome = (JAXBElement<EnGiven>) patientPerson.getName().get(0).getContent().get(0);
-					//System.out.println("NOME: " + objNome.getValue().getContent().get(0));
+
+					System.out.println("NOME: " + objNome.getValue().getContent().get(0));
 					consulta.setNome(objNome.getValue().getContent().get(0).toString());
 					
 					//Nome da mae
 					JAXBElement<EnGiven> objNomeMae = (JAXBElement<EnGiven>) patientPerson.getPersonalRelationship().get(0).getRelationshipHolder1().getValue().getName().get(0).getContent().get(0);
-					//System.out.println("Nome da mae: " + objNomeMae.getValue().getContent().get(0));
+					System.out.println("Nome da mae: " + objNomeMae.getValue().getContent().get(0));
 					consulta.setMae(objNomeMae.getValue().getContent().get(0).toString());
 					//Nome do Pai
 					JAXBElement<EnGiven> objNomePai = (JAXBElement<EnGiven>) patientPerson.getPersonalRelationship().get(1).getRelationshipHolder1().getValue().getName().get(0).getContent().get(0);
-					//System.out.println("Nome do pai: " + objNomePai.getValue().getContent().get(0));
+					System.out.println("Nome do pai: " + objNomePai.getValue().getContent().get(0));
 					consulta.setPai(objNomePai.getValue().getContent().get(0).toString());
 					//Sexo
-					//System.out.println("Sexo: " + patientPerson.getAdministrativeGenderCode().getCode());
+					System.out.println("Sexo: " + patientPerson.getAdministrativeGenderCode().getCode());
 					consulta.setSexo(patientPerson.getAdministrativeGenderCode().getCode());
 					//Data de nascimento
-					//System.out.println("Data de nascimento: " + patientPerson.getBirthTime().getValue());
-					String dtnascimento = patientPerson.getBirthTime().getValue();
-					String ano = dtnascimento.substring(0, 4);
-					String mes = dtnascimento.substring(4, 6);
-					String dia = dtnascimento.substring(6, 8);
+					System.out.println("Data de nascimento: " + patientPerson.getBirthTime().getValue());
+					consulta.setDtNasc(patientPerson.getBirthTime().getValue());
 					
-					consulta.setDtNasc(dia+"/"+mes+"/"+ano);
-					
-					Raca raca = racaRepository.pegaRaca(patientPerson.getRaceCode().get(0).getCode().toString());
-					
-					consulta.setRaca(raca.getDescricao());
-					
-					for(AD addr : patientPerson.getAddr()) {
-						
-						for (i = 0; i < addr.getContent().size(); i++ ) {
-							
-							JAXBElement<?> addrs = (JAXBElement<?>) addr.getContent().get(i);
-							
-							String elemento = addrs.getName().toString().toString().toString();
-							
-							if ("city".equals(elemento.substring(16))) {
-								JAXBElement<AdxpCity> objcity = (JAXBElement<AdxpCity>) patientPerson.getAddr().get(0).getContent().get(i);
-							//	System.out.println(objcity.getValue().getContent().get(0).toString());
-								
-								Municipios municipio = municipiosRepository.pegaMunicipio(objcity.getValue().getContent().get(0).toString());
-								
-								consulta.setCidade(municipio.getNomeMunicipio());
-							}
-							if ("state".equals(elemento.substring(16))) {
-								JAXBElement<AdxpState> objstate = (JAXBElement<AdxpState>) patientPerson.getAddr().get(0).getContent().get(i);
-								//System.out.println(objstate.getValue().getContent().get(0).toString());
-								consulta.setEstado(objstate.getValue().getContent().get(0).toString());
-							}
-							if ("postalCode".equals(elemento.substring(16))) {
-								JAXBElement<AdxpPostalCode> objcodpost = (JAXBElement<AdxpPostalCode>) patientPerson.getAddr().get(0).getContent().get(i);
-								//System.out.println(objcodpost.getValue().getContent().get(0).toString());
-								consulta.setCep(objcodpost.getValue().getContent().get(0).toString());
-							}
-							if ("houseNumber".equals(elemento.substring(16))) {
-								JAXBElement<AdxpHouseNumber> objnum = (JAXBElement<AdxpHouseNumber>) patientPerson.getAddr().get(0).getContent().get(i);
-								//System.out.println(objnum.getValue().getContent().get(0).toString());
-								consulta.setNumero(objnum.getValue().getContent().get(0).toString());
-							}
-							if ("streetName".equals(elemento.substring(16))) {
-								JAXBElement<AdxpStreetName> objend = (JAXBElement<AdxpStreetName>) patientPerson.getAddr().get(0).getContent().get(i);
-								//	System.out.println(objend.getValue().getContent().get(0).toString());
-								consulta.setEndereco(objend.getValue().getContent().get(0).toString());
-							}
-							if ("additionalLocator".equals(elemento.substring(16))) {
-								JAXBElement<AdxpAdditionalLocator> objbar = (JAXBElement<AdxpAdditionalLocator>) patientPerson.getAddr().get(0).getContent().get(i);
-								//System.out.println(objbar.getValue().getContent().get(0).toString());
-								consulta.setBairro(objbar.getValue().getContent().get(0).toString());
-							}
-							if ("unitID".equals(elemento.substring(16))) {
-								JAXBElement<AdxpUnitID> objcomp = (JAXBElement<AdxpUnitID>) patientPerson.getAddr().get(0).getContent().get(i);
-								//System.out.println(objbar.getValue().getContent().get(0).toString());
-								consulta.setComplemento(objcomp.getValue().getContent().get(0).toString());
-							}
-						}
-					}
-					
-					if(consulta.getCns() != null || consulta.getCns() == "") {
-						cnsRepository.save(consulta);
-						consulta = new ConsultaCNS();
-					}
 				}
 			}
 			
-			List<ConsultaCNS> consulList = cnsRepository.findAll();
-			
-			return new ResponseEntity<List<ConsultaCNS>>(consulList, HttpStatus.OK);
-			
-	/*	}catch (com.sun.xml.internal.ws.fault.ServerSOAPFaultException e) {
-		
-			String error = "Não foi encontrado e/ou Falha ao Acessar o Servidor";
-			
-			return new ResponseEntity<String>(error, HttpStatus.BAD_REQUEST);
+		/*} catch (com.sun.xml.internal.ws.fault.ServerSOAPFaultException e) {
+			System.out.println("Falha ao Acessar o Servidor");
 		}*/
+		
 
 		
-    }
-	
-	static {
-
-		// CONFIGURA A JVM PARA IGNORAR O CERTIFICADOS INVALIDOS
-		// Create a trust manager that does not validate certificate chains
-		TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
-			public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-				return null;
-			}
-
-			public void checkClientTrusted(X509Certificate[] certs, String authType) {
-			}
-
-			public void checkServerTrusted(X509Certificate[] certs, String authType) {
-			}
-		} };
-
-		// Install the all-trusting trust manager
-		SSLContext sc = null;
-		try {
-			sc = SSLContext.getInstance("SSL");
-			sc.init(null, trustAllCerts, new java.security.SecureRandom());
-		} catch (NoSuchAlgorithmException e1) {
-			throw new RuntimeException(e1);
-		} catch (KeyManagementException e) {
-			throw new RuntimeException(e);
-		}
-
-		HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-
-		// Create all-trusting host name verifier
-		HostnameVerifier allHostsValid = new HostnameVerifier() {
-			public boolean verify(String hostname, SSLSession session) {
-				return true;
-			}
-		};
-
-		// Install the all-trusting host verifier
-		HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
-
-		SERVICE = new PDQSupplierService();
-
-		// Handlers para acionar os parametros de autenticacao no cabecalho da
-		// mensagem
-		final WSSUsernameTokenSecurityHandler handler = new WSSUsernameTokenSecurityHandler("02432879414", "i1o05sHopx91*");
-		SERVICE.setHandlerResolver(new HandlerResolver() {
-
-			@Override
-			@SuppressWarnings("rawtypes")
-			public List<Handler> getHandlerChain(PortInfo arg0) {
-				List<Handler> handlerList = new ArrayList<Handler>();
-				handlerList.add(handler);
-				return handlerList;
-			}
-		});
 	}
-	
-	@GetMapping(value = "selectcns")
-    @ResponseBody
-    public ResponseEntity<ConsultaCNS> selectcns(@RequestParam(name = "cns") Long cns){
-		
-		ConsultaCNS conCNS = cnsRepository.findById(cns).get();
-		
-		return new ResponseEntity<ConsultaCNS>(conCNS, HttpStatus.OK);
-	}
-		
-
 }
