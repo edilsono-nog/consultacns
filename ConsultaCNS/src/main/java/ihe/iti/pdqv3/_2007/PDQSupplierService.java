@@ -17,7 +17,7 @@ import javax.xml.ws.WebServiceFeature;
  * Generated source version: 2.2
  * 
  */
-@WebServiceClient(name = "PDQSupplier_Service", targetNamespace = "urn:ihe:iti:pdqv3:2007", wsdlLocation = "http://localhost/wsdl/PDQSupplier.wsdl")
+@WebServiceClient(name = "PDQSupplier_Service", targetNamespace = "urn:ihe:iti:pdqv3:2007", wsdlLocation = "https://cnsconsulta.herokuapp.com/wsdl/PDQSupplier.wsdl")
 public class PDQSupplierService
     extends Service
 {
@@ -30,7 +30,7 @@ public class PDQSupplierService
         URL url = null;
         WebServiceException e = null;
         try {
-            url = new URL("http://localhost/wsdl/PDQSupplier.wsdl");
+            url = new URL("https://cnsconsulta.herokuapp.com/wsdl/PDQSupplier.wsdl");
         } catch (MalformedURLException ex) {
             e = new WebServiceException(ex);
         }
