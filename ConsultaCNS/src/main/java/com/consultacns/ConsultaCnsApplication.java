@@ -24,7 +24,4 @@ public class ConsultaCnsApplication {
 		SpringApplication.run(ConsultaCnsApplication.class, args);
 	}
 	
-	public static String PORT = System.getenv("PORT");
-	
-
 }
