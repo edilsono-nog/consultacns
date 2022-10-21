@@ -10,7 +10,8 @@
 	</parent>
 	<groupId>ConsultaCNS</groupId>
 	<artifactId>ConsultaCNS</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<packaging>jar</packaging>
+	<version>1.0</version>
 	<name>ConsultaCNS</name>
 	<description>ConsultaCNS</description>
 	<properties>
@@ -77,16 +78,14 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
 			<plugin>
-		        <groupId>org.apache.maven.plugins</groupId>
-		        <artifactId>maven-compiler-plugin</artifactId>
-		        <configuration>
-		            <source>1.8</source>
-		            <target>1.8</target>
-		            <compilerArguments>
-		                <bootclasspath>${java.home}/lib/rt.jar${path.separator}${java.home}/lib/jce.jar${path.separator}${java.home}/../lib/tools.jar</bootclasspath>
-		            </compilerArguments>
-		        </configuration>
-		    </plugin>
+                <groupId>com.heroku.sdk</groupId>
+                <artifactId>heroku-maven-plugin</artifactId>
+                <version>2.0.3</version>
+                <configuration>
+                    <appName>sysadm</appName>
+                    <warFile>target/ConsultaCNS-1.0.jar</warFile>
+                </configuration>
+            </plugin>
 		</plugins>
 	</build>
 
