@@ -256,7 +256,7 @@ public class PDQClientController {
 		controlAct.setQueryByParameter(jaxbQuery);
 		// </controlActProcess>
 
-		try {
+	//	try {
 			PRPAIN201306UV02 retorno = pdq.pdqSupplierPRPAIN201305UV02(body);	
 			
 			//System.out.println(retorno.getControlActProcess().getSubject().size());
@@ -377,12 +377,12 @@ public class PDQClientController {
 			
 			return new ResponseEntity<List<ConsultaCNS>>(consulList, HttpStatus.OK);
 			
-		}catch (com.sun.xml.internal.ws.fault.ServerSOAPFaultException e) {
+	/*	}catch (com.sun.xml.internal.ws.fault.ServerSOAPFaultException e) {
 		
 			String error = "Não foi encontrado e/ou Falha ao Acessar o Servidor";
 			
 			return new ResponseEntity<String>(error, HttpStatus.BAD_REQUEST);
-		}
+		}*/
 
 		
     }
