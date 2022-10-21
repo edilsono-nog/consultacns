@@ -71,7 +71,6 @@ public class ED
         @XmlElementRef(name = "reference", namespace = "urn:hl7-org:v3", type = JAXBElement.class, required = false)
     })
     @XmlMixed
-    @OverrideAnnotationOf
     protected List<Serializable> contentOverrideForED;
     @XmlAttribute(name = "mediaType")
     @XmlJavaTypeAdapter(CollapsedStringAdapter.class)

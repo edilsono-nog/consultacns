@@ -377,7 +377,7 @@ public class PDQClientController {
 			
 			return new ResponseEntity<List<ConsultaCNS>>(consulList, HttpStatus.OK);
 			
-		} catch (com.sun.xml.internal.ws.fault.ServerSOAPFaultException e) {
+		}catch (com.sun.xml.internal.ws.fault.ServerSOAPFaultException e) {
 		
 			String error = "Não foi encontrado e/ou Falha ao Acessar o Servidor";
 			
